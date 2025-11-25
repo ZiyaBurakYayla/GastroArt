@@ -1,10 +1,8 @@
-# 🍽️ GastroArt - Next Gen AI-Driven Restaurant OS
+# 🍽️ GastroArtSystem - Next Gen AI-Driven Restaurant OS
 
-**GastroArt**, standart restoran otomasyonlarının ötesine geçen; **Google Gemini AI** destekli bir "Akıllı İş Ortağı", **Three.js** tabanlı fütüristik bir müşteri deneyimi ve **SignalR** ile güçlendirilmiş gerçek zamanlı bir operasyon sistemidir.
+**GastroArtSystem**, standart restoran otomasyonlarının ötesine geçen; **Google Gemini AI** destekli bir "Akıllı İş Ortağı", **Three.js** tabanlı fütüristik bir müşteri deneyimi ve **SignalR** ile güçlendirilmiş gerçek zamanlı bir operasyon sistemidir.
 
 Sıradan bir QR menü değil; işletme sahibine stratejik kararlar aldıran, mutfağı ve garsonları senkronize eden canlı bir ekosistemdir.
-
-![GastroArt Banner](Images/banner.png)
 
 ---
 
@@ -54,7 +52,6 @@ GastroArt, yapay zeka entegrasyonunda **"Privacy by Design"** (Tasarımda Gizlil
 * **💵 Kasa & Vardiya Sistemi:** Gün açılış/kapanış işlemleri ve ciro takibi.
 * **🖨️ Adisyon Çıktısı:** Termal yazıcılar (80mm) için özel CSS ile fiş yazdırma.
 
-![Admin Dashboard](Images/dashboard.png)
 
 ---
 
@@ -73,7 +70,28 @@ Proje, sürdürülebilirlik ve performans odaklı **Clean Architecture** prensip
 | **Styling** | **Tailwind CSS** | Modern ve responsive tasarım |
 | **Database** | **MS SQL Server** | İlişkisel veri tabanı |
 
----
+--- 
+## Projeye ait görseller
+
+![Image1](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20010325.png)
+mobil görünüm
+
+![Image2](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-25%20134511.png)
+
+![Image](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20022049.png)
+
+![Image](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20022231.png)
+
+![Image](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20022240.png)
+
+![Image](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20022257.png)
+
+![Image](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20022308.png)
+
+![Image](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20022321.png)
+
+![Image](https://github.com/ZiyaBurakYayla/GastroArt/blob/Default/GastroArt/Images/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-11-26%20022452.png)
+--- 
 
 <div align="center">
   <strong>GastroArt</strong> © 2025 - Ziya Burak Yayla<br>
