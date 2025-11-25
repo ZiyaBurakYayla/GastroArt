@@ -1,0 +1,120 @@
+﻿@model GastroArt.Models.Data.Order
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Adisyon #@Model.Id</title>
+    <style>
+        /* Yazıcı Ayarları */
+        page {
+            size: 80mm auto; 
+            margin: 0;
+        }
+        
+        body {
+            width: 74mm; 
+            margin: 3mm auto;
+            font-family: 'Courier New', Courier, monospace; 
+            font-size: 12px;
+            color: #000;
+            background: #fff;
+        }
+
+        .header { text-align: center; margin-bottom: 10px; }
+        .title { font-size: 16px; font-weight: bold; text-transform: uppercase; }
+        .sub-title { font-size: 10px; margin-top: 2px; }
+        
+        .divider { border-bottom: 1px dashed #000; margin: 8px 0; }
+        
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        th { text-align: left; border-bottom: 1px solid #000; padding-bottom: 2px; }
+        td { padding: 4px 0; vertical-align: top; }
+        .qty { width: 10%; font-weight: bold; }
+        .item { width: 65%; }
+        .price { width: 25%; text-align: right; }
+
+        .total-section { text-align: right; margin-top: 10px; font-size: 14px; font-weight: bold; }
+        
+        .footer { text-align: center; margin-top: 20px; font-size: 10px; }
+
+        media print {
+            .no-print { display: none; }
+        }
+        .print-btn {
+            width: 100%; padding: 10px; background: #000; color: #fff; 
+            border: none; font-weight: bold; cursor: pointer; margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="window.print()" class="no-print print-btn">YAZDIR</button>
+
+    <div class="header">
+        <div class="title">GASTROART CAFE</div>
+        <div class="sub-title">Lezzetin Sanatı</div>
+        <div class="sub-title">Tarih: @Model.OrderDate.ToString("dd.MM.yyyy HH:mm")</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="info-row">
+        <span>Adisyon No:</span>
+        <strong>#@Model.Id</strong>
+    </div>
+    <div class="info-row">
+        <span>Masa:</span>
+        <strong>@Model.TableNo</strong>
+    </div>
+
+    <div class="divider"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="qty">Ad.</th>
+                <th class="item">Ürün</th>
+                <th class="price">Tutar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderItems)
+            {
+                <tr>
+                    <td class="qty">@item.Quantity</td>
+                    <td class="item">@item.ProductName</td>
+                    <td class="price">@((item.Price * item.Quantity).ToString("N2"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <div class="total-section">
+        TOPLAM: @Model.TotalAmount.ToString("N2") ₺
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.CustomerNote))
+    {
+        <div class="divider"></div>
+        <div style="font-size: 10px;">
+            <strong>Not:</strong> @Model.CustomerNote
+        </div>
+    }
+
+    <div class="footer">
+        <p>Afiyet Olsun!</p>
+        <p>Bizi tercih ettiğiniz için teşekkürler.</p>
+    </div>
+
+    <script>
+    </script>
+
+</body>
+</html>

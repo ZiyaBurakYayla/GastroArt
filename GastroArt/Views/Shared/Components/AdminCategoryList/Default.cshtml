@@ -1,0 +1,161 @@
+﻿@model List<GastroArt.Models.Entity.Category>
+
+<div class="flex justify-between items-end mb-6">
+    <div>
+        <h2 class="text-xl font-bold text-gray-800">Menü Kategorileri</h2>
+        <p class="text-xs text-gray-400">Kategorileri düzenle veya yeni ekle.</p>
+    </div>
+    <button onclick="openCreateModal()" class="bg-black text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-800 transition flex items-center gap-2 shadow-lg">
+        <i class="ri-add-line"></i> Yeni Ekle
+    </button>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    @foreach (var item in Model)
+    {
+        <div class="bg-white p-6 rounded-3xl border border-gray-100 group hover:shadow-xl transition-all duration-300">
+            <div class="flex justify-between items-start mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 rounded-full ring-4 ring-opacity-20" style="background-color: @item.ColorCode; --tw-ring-color: @item.ColorCode;"></div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">@item.Name</h3>
+                        @if (!string.IsNullOrEmpty(item.NameEn))
+                        {
+                            <div class="text-[10px] text-gray-400">@item.NameEn</div>
+                        }
+                    </div>
+                </div>
+                <a href="/Category/Delete/@item.Id" onclick="return confirm('Silmek istediğine emin misin?')" class="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:bg-red-50 hover:text-red-500 transition">
+                    <i class="ri-delete-bin-line"></i>
+                </a>
+            </div>
+            <div class="text-xs text-gray-500 font-medium bg-gray-50 inline-block px-3 py-1 rounded-lg mb-6">
+                @(item.Products != null ? item.Products.Count : 0) Ürün
+            </div>
+
+            <button type="button"
+                    data-id="@item.Id"
+                    data-name="@item.Name"
+                    data-name-en="@item.NameEn"
+                    data-color="@item.ColorCode"
+                    onclick="openEditModal(this)"
+                    class="w-full py-2.5 bg-gray-50 text-gray-600 rounded-xl text-xs font-bold group-hover:bg-black group-hover:text-white transition-colors">
+                DÜZENLE
+            </button>
+        </div>
+    }
+</div>
+
+<div id="category-modal" class="fixed inset-0 z-50 hidden transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeCreateModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 scale-95 transition-transform" id="category-content">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Yeni Kategori</h3>
+        <form action="/Category/Create" method="post">
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Kategori (TR)</label>
+                    <input type="text" name="Name" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-black transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Kategori (EN)</label>
+                    <input type="text" name="NameEn" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-black transition text-sm" placeholder="English Name">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">3D Kristal Rengi</label>
+                <div class="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <input type="color" name="ColorCode" id="create-color-picker" value="#FF9AA2" class="w-10 h-10 rounded cursor-pointer border-none bg-transparent" oninput="updateCreatePreview(this.value)">
+                    <div class="flex-1 text-xs font-bold text-gray-600" id="create-color-code">#FF9AA2</div>
+                    <div id="create-crystal-preview" class="w-8 h-8" style="background-color:#FF9AA2; clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></div>
+                </div>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl font-bold text-xs text-white bg-black hover:bg-gray-800 transition">KAYDET</button>
+        </form>
+    </div>
+</div>
+
+<div id="edit-cat-modal" class="fixed inset-0 z-50 hidden transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeEditModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-md rounded-[2rem] shadow-2xl p-8 scale-95 transition-transform" id="edit-cat-content">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Kategoriyi Düzenle</h3>
+        <form action="/Category/Update" method="post">
+            <input type="hidden" id="edit-cat-id" name="Id" />
+
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Kategori (TR)</label>
+                    <input type="text" id="edit-cat-name" name="Name" required class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-black transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Kategori (EN)</label>
+                    <input type="text" id="edit-cat-name-en" name="NameEn" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-black transition text-sm">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">3D Kristal Rengi</label>
+                <div class="flex items-center gap-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <input type="color" id="edit-cat-color" name="ColorCode" class="w-10 h-10 rounded cursor-pointer border-none bg-transparent" oninput="updateEditPreview(this.value)">
+                    <div class="flex-1 text-xs font-bold text-gray-600" id="edit-cat-color-code"></div>
+                    <div id="edit-cat-preview" class="w-8 h-8" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);"></div>
+                </div>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-xl font-bold text-xs text-white bg-black hover:bg-gray-800 transition">GÜNCELLE</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // RENK ÖNİZLEME FONKSİYONLARI
+    function updateCreatePreview(c){
+        document.getElementById('create-crystal-preview').style.backgroundColor=c;
+        document.getElementById('create-color-code').innerText=c.toUpperCase();
+    }
+    function updateEditPreview(c){
+        document.getElementById('edit-cat-preview').style.backgroundColor=c;
+        document.getElementById('edit-cat-color-code').innerText=c.toUpperCase();
+    }
+
+    // CREATE MODAL
+    const cm = document.getElementById('category-modal'), cc = document.getElementById('category-content');
+    function openCreateModal(){
+        cm.classList.remove('hidden');
+        setTimeout(()=>{ cm.classList.remove('opacity-0','pointer-events-none'); cc.classList.remove('scale-95'); },10);
+    }
+    function closeCreateModal(){
+        cm.classList.add('opacity-0','pointer-events-none'); cc.classList.add('scale-95');
+        setTimeout(()=>{ cm.classList.add('hidden'); },300);
+    }
+
+    // EDIT MODAL (GÜNCELLENDİ)
+    const em = document.getElementById('edit-cat-modal'), ec = document.getElementById('edit-cat-content');
+
+    function openEditModal(btn){
+        // Verileri butondan oku (Safe Method)
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        const nameEn = btn.getAttribute('data-name-en');
+        const color = btn.getAttribute('data-color');
+
+        // Inputlara doldur
+        document.getElementById('edit-cat-id').value = id;
+        document.getElementById('edit-cat-name').value = name;
+        document.getElementById('edit-cat-name-en').value = nameEn;
+
+        // Renk ayarları
+        document.getElementById('edit-cat-color').value = color;
+        document.getElementById('edit-cat-color-code').innerText = color;
+        document.getElementById('edit-cat-preview').style.backgroundColor = color;
+
+        // Modalı aç
+        em.classList.remove('hidden');
+        setTimeout(()=>{ em.classList.remove('opacity-0','pointer-events-none'); ec.classList.remove('scale-95'); },10);
+    }
+
+    function closeEditModal(){
+        em.classList.add('opacity-0','pointer-events-none'); ec.classList.add('scale-95');
+        setTimeout(()=>{ em.classList.add('hidden'); },300);
+    }
+</script>

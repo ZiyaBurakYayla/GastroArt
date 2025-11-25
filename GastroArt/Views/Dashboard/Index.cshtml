@@ -1,0 +1,74 @@
+﻿@{
+    ViewData["Title"] = "Genel Bakış";
+    Layout = "_AdminLayout";
+}
+
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Genel Bakış</h1>
+    <p class="text-sm text-gray-500">Restoranın anlık durumu ve analizler.</p>
+</div>
+
+@await Component.InvokeAsync("AdminStats")
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8 mt-8">
+    <div class="lg:col-span-2 bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-800">Son 7 Günlük Satış</h3>
+            <span class="text-xs text-gray-400 font-medium uppercase">Günlük Ciro</span>
+        </div>
+        <div class="relative h-64 w-full"><canvas id="salesChart"></canvas></div>
+    </div>
+
+    <div class="bg-white p-6 rounded-3xl border border-gray-200 shadow-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-gray-800">Top 5 Ürün</h3>
+            <span class="text-xs text-gray-400 font-medium uppercase">Adet Bazlı</span>
+        </div>
+        <div class="relative h-64 w-full flex justify-center"><canvas id="productsChart"></canvas></div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        fetch('/Dashboard/GetChartData')
+            .then(response => response.json())
+            .then(data => {
+                renderSalesChart(data.dailySales);
+                renderProductChart(data.topProducts);
+            });
+
+        function renderSalesChart(salesData) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0.1)'); gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: salesData.map(x => x.date),
+                    datasets: [{
+                        label: 'Ciro (₺)', data: salesData.map(x => x.total),
+                        borderColor: '#000', backgroundColor: gradient, borderWidth: 2,
+                        pointBackgroundColor: '#fff', pointBorderColor: '#000', pointRadius: 5, fill: true, tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { borderDash: [5, 5] } }, x: { grid: { display: false } } } }
+            });
+        }
+
+        function renderProductChart(productData) {
+            const ctx = document.getElementById('productsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: productData.map(x => x.name),
+                    datasets: [{
+                        data: productData.map(x => x.count),
+                        backgroundColor: ['#1a1a1a', '#4d4d4d', '#808080', '#b3b3b3', '#e6e6e6'], borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Outfit', size: 11 } } } } }
+            });
+        }
+    });
+</script>

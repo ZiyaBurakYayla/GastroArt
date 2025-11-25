@@ -1,0 +1,20 @@
+﻿@model dynamic
+<div class="grid grid-cols-3 gap-6 mb-8">
+    <div class="bg-black text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
+        <div class="relative z-10">
+            <div class="text-xs font-bold text-gray-400 uppercase mb-1">Toplam Kategori</div>
+            <div class="text-3xl font-bold">@Model.CategoryCount</div>
+        </div>
+        <i class="ri-apps-2-line absolute right-4 bottom-4 text-4xl text-gray-800"></i>
+    </div>
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative">
+        <div class="text-xs font-bold text-gray-400 uppercase mb-1">Toplam Ürün</div>
+        <div class="text-3xl font-bold text-gray-800">@Model.ProductCount</div>
+        <i class="ri-restaurant-line absolute right-4 bottom-4 text-4xl text-gray-100"></i>
+    </div>
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 relative">
+        <div class="text-xs font-bold text-gray-400 uppercase mb-1">Aktif Ürünler</div>
+        <div class="text-3xl font-bold text-green-600">@Model.ActiveCount</div>
+        <i class="ri-checkbox-circle-line absolute right-4 bottom-4 text-4xl text-green-50"></i>
+    </div>
+</div>

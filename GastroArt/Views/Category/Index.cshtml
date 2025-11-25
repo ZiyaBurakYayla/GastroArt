@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Kategori Yönetimi";
+    Layout = "_AdminLayout";
+}
+
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Kategori Yönetimi</h1>
+    <p class="text-sm text-gray-500">Menüdeki kategorileri buradan düzenleyebilirsin.</p>
+</div>
+
+@await Component.InvokeAsync("AdminCategoryList")

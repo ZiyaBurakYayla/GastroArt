@@ -1,0 +1,78 @@
+﻿@{
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
+
+    string activeClass = "bg-black text-white shadow-lg shadow-gray-200 transform scale-[1.02]";
+    string inactiveClass = "text-gray-500 hover:bg-gray-50 hover:text-gray-900";
+}
+
+<nav class="flex-1 px-5 space-y-3 py-6">
+
+    <p class="text-[10px] font-extrabold text-gray-400 uppercase px-4 tracking-widest mb-2">Analiz</p>
+
+    <a href="/Dashboard/Index"
+       class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+       @(currentController == "Dashboard" ? activeClass : inactiveClass)">
+        <i class="ri-dashboard-3-line text-xl transition-transform group-hover:scale-110"></i>
+        <span class="font-medium text-sm tracking-wide">Genel Bakış</span>
+    </a>
+
+    <a href="/Order/Index"
+       class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+       @((currentController == "Admin" && currentAction == "Orders") || (currentController == "Order" && currentAction != "PeriodHistory") ? activeClass : inactiveClass)">
+        <i class="ri-file-list-3-line text-xl transition-transform group-hover:scale-110"></i>
+        <span class="font-medium text-sm tracking-wide">Siparişler</span>
+
+        @if (currentController != "Admin" && currentController != "Order")
+        {
+            <span class="ml-auto w-2 h-2 bg-red-500 rounded-full"></span>
+        }
+    </a>
+
+    <a href="/Order/PeriodHistory"
+       class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+       @(currentController == "Order" && currentAction == "PeriodHistory" ? activeClass : inactiveClass)">
+        <i class="ri-history-line text-xl transition-transform group-hover:scale-110"></i>
+        <span class="font-medium text-sm tracking-wide">Kasa Geçmişi</span>
+    </a>
+
+    <a href="/Report/Reports"
+       class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+       @(currentController == "Admin" && currentAction == "Reports" ? activeClass : inactiveClass)">
+        <i class="ri-bar-chart-grouped-line text-xl transition-transform group-hover:scale-110"></i>
+        <span class="font-medium text-sm tracking-wide">Satış Raporları</span>
+    </a>
+
+    <div class="pt-4">
+        <p class="text-[10px] font-extrabold text-gray-400 uppercase px-4 tracking-widest mb-2">Yönetim</p>
+    </div>
+
+    <a href="/Product/Index"
+       class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+       @(currentController == "Product" ? activeClass : inactiveClass)">
+        <i class="ri-shopping-bag-3-line text-xl transition-transform group-hover:scale-110"></i>
+        <span class="font-medium text-sm tracking-wide">Ürünler</span>
+    </a>
+
+    <a href="/Category/Index"
+       class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+       @(currentController == "Category" ? activeClass : inactiveClass)">
+        <i class="ri-layout-grid-line text-xl transition-transform group-hover:scale-110"></i>
+        <span class="font-medium text-sm tracking-wide">Kategoriler</span>
+    </a>
+
+    <a href="/Qr/Index"
+       class="flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300 group
+       @(currentController == "Qr" ? activeClass : inactiveClass)">
+        <i class="ri-qr-code-line text-xl transition-transform group-hover:scale-110"></i>
+        <span class="font-medium text-sm tracking-wide">QR Kodlar</span>
+    </a>
+
+</nav>
+
+<div class="p-5 border-t border-gray-100 mt-auto">
+    <a href="/Admin/Logout" class="flex items-center justify-center gap-2 text-red-500 bg-red-50 hover:bg-red-100 hover:text-red-600 px-4 py-3.5 rounded-2xl transition-all duration-300 font-bold text-sm w-full shadow-sm hover:shadow-md">
+        <i class="ri-logout-box-r-line text-lg"></i>
+        <span>Oturumu Kapat</span>
+    </a>
+</div>

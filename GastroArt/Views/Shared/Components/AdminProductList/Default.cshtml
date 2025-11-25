@@ -1,0 +1,264 @@
+﻿@model List<GastroArt.Models.Entity.Product>
+@{
+    var categories = ViewBag.Categories as List<GastroArt.Models.Entity.Category>;
+}
+
+<div class="flex flex-col md:flex-row justify-between items-end gap-4 mb-6">
+    <form action="/Product/Index" method="get" class="flex gap-3 w-full md:w-auto">
+        <div class="relative w-full md:w-64">
+            <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input type="text" name="search" value="@ViewBag.CurrentSearch" placeholder="Ürün ara..." class="pl-10 pr-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm focus:border-black outline-none w-full">
+        </div>
+        <select name="categoryId" onchange="this.form.submit()" class="px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none cursor-pointer">
+            <option value="">Tüm Kategoriler</option>
+            @foreach (var cat in categories)
+            {
+                <!option value="@cat.Id" @(ViewBag.CurrentCatId == cat.Id ? "selected" : "")>@cat.Name</!option>
+            }
+        </select>
+    </form>
+    <button onclick="openProdCreateModal()" class="bg-black text-white px-5 py-2.5 rounded-xl font-medium text-sm hover:bg-gray-800 transition flex items-center gap-2 shadow-lg"><i class="ri-add-line"></i> Yeni Ürün</button>
+</div>
+
+<div class="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[900px]">
+            <thead>
+                <tr class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                    <th class="p-5 font-bold">Durum</th>
+                    <th class="p-5 font-bold">Görsel</th>
+                    <th class="p-5 font-bold">Ürün Adı</th>
+                    <th class="p-5 font-bold">Stok</th>
+                    <th class="p-5 font-bold">Kategori</th>
+                    <th class="p-5 font-bold">Fiyat</th>
+                    <th class="p-5 font-bold text-right">İşlem</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm text-gray-700">
+                @foreach (var p in Model)
+                {
+                    <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                        <td class="p-4">
+                            @if (p.IsActive)
+                            {
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs font-bold border border-green-200">Aktif</span>
+                            }
+                            else
+                            {
+
+                                <span class="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold border border-red-200">Pasif</span>
+                            }
+                        </td>
+                        <td class="p-4"><img src="@p.ImageUrl" class="w-12 h-12 rounded-xl object-cover border border-gray-100 bg-white" /></td>
+                        <td class="p-4 font-bold">
+                            @p.Name
+                            @if (!string.IsNullOrEmpty(p.NameEn))
+                            {
+                                <div class="text-[10px] text-gray-400 font-normal">@p.NameEn</div>
+                            }
+                        </td>
+                        <td class="p-4">
+                            @if (!p.TrackStock)
+                            {
+                                <span class="text-gray-400 text-xs font-bold border border-gray-200 px-2 py-1 rounded bg-white">SINIRSIZ</span>
+                            }
+                            else if (p.Stock <= 0)
+                            {
+
+                                <span class="text-red-600 font-bold text-xs bg-red-50 px-2 py-1 rounded">TÜKENDİ</span>
+                            }
+                            else
+                            {
+
+                                <span class="text-gray-700 font-bold">@p.Stock Adet</span>
+                            }
+                        </td>
+                        <td class="p-4"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs">@p.Category.Name</span></td>
+                        <td class="p-4 font-bold text-green-600">@p.Price.ToString("N2")₺</td>
+                        <td class="p-4 text-right space-x-2">
+                            <button type="button"
+                                    data-id="@p.Id" data-cat-id="@p.CategoryId" data-name="@p.Name" data-name-en="@p.NameEn"
+                                    data-price="@p.Price.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                    data-desc="@p.Description" data-desc-en="@p.DescriptionEn"
+                                    data-img="@p.ImageUrl" data-active="@p.IsActive" data-stock="@p.Stock" data-track="@p.TrackStock"
+                                    onclick="openProdEditModal(this)"
+                                    class="text-blue-500 hover:bg-blue-50 p-2 rounded-lg transition">
+                                <i class="ri-pencil-line"></i>
+                            </button>
+                            <a href="/Product/Delete/@p.Id" onclick="return confirm('Silmek istediğine emin misin?')" class="text-red-500 hover:bg-red-50 p-2 rounded-lg transition"><i class="ri-delete-bin-line"></i></a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="prod-create-modal" class="fixed inset-0 z-50 hidden transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeProdCreateModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-8 scale-95 transition-transform max-h-[90vh] overflow-y-auto">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Yeni Ürün Ekle</h3>
+
+        <form action="/Product/Create" method="post" enctype="multipart/form-data" class="space-y-4">
+
+            <div class="flex items-center gap-4">
+                <div class="w-20 h-20 bg-gray-100 rounded-2xl border border-dashed border-gray-300 flex items-center justify-center overflow-hidden relative group">
+                    <img id="create-preview" src="https://via.placeholder.com/100?text=+" class="w-full h-full object-cover opacity-50 group-hover:opacity-100 transition">
+                </div>
+                <div class="flex-1">
+                    <label class="label-text">Ürün Görseli</label>
+                    <input type="file" name="ImageFile" accept="image/*" onchange="previewImage(this, 'create-preview')" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800 cursor-pointer">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="label-text">Ürün Adı (TR)</label><input type="text" name="Name" required class="input-field"></div>
+                <div><label class="label-text">Ürün Adı (EN)</label><input type="text" name="NameEn" class="input-field"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="label-text">Fiyat (₺)</label><input type="number" name="Price" step="0.01" required class="input-field"></div>
+                <div><label class="label-text">Kategori</label><select name="CategoryId" class="input-field">@foreach(var c in categories) {
+                <option value="@c.Id">@c.Name</option>
+                                }
+</select></div>
+            </div>
+            <div>
+                <label class="label-text">Stok Durumu</label>
+                <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-3">
+                    <input type="number" name="Stock" value="50" class="w-20 outline-none text-sm font-bold" placeholder="Adet">
+                    <div class="w-[1px] h-6 bg-gray-200 mx-1"></div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="TrackStock" value="true" class="w-4 h-4 accent-black cursor-pointer">
+                        <span class="text-xs text-gray-500">Stoktan Düş (Takip Et)</span>
+                    </div>
+                </div>
+            </div>
+            <div><label class="label-text">Açıklama (TR)</label><textarea name="Description" rows="2" class="input-field"></textarea></div>
+            <div><label class="label-text">Açıklama (EN)</label><textarea name="DescriptionEn" rows="2" class="input-field"></textarea></div>
+
+            <button type="submit" class="w-full py-3 rounded-xl font-bold text-xs text-white bg-black hover:bg-gray-800 transition">KAYDET</button>
+        </form>
+    </div>
+</div>
+
+<div id="prod-edit-modal" class="fixed inset-0 z-50 hidden transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeProdEditModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-8 scale-95 transition-transform max-h-[90vh] overflow-y-auto" id="prod-edit-content">
+        <h3 class="text-xl font-bold text-gray-900 mb-6">Ürünü Düzenle</h3>
+
+        <form action="/Product/Edit" method="post" enctype="multipart/form-data" class="space-y-4">
+            <input type="hidden" name="Id" id="edit-prod-id">
+
+            <div class="flex items-center gap-4">
+                <div class="w-20 h-20 bg-gray-100 rounded-2xl border border-gray-200 flex items-center justify-center overflow-hidden">
+                    <img id="edit-preview" src="" class="w-full h-full object-cover">
+                </div>
+                <div class="flex-1">
+                    <label class="label-text">Görseli Değiştir</label>
+                    <input type="file" name="ImageFile" accept="image/*" onchange="previewImage(this, 'edit-preview')" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800 cursor-pointer">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                <input type="checkbox" name="IsActive" id="edit-prod-active" value="true" class="w-5 h-5 accent-black cursor-pointer">
+                <label for="edit-prod-active" class="text-sm font-bold text-gray-700 cursor-pointer select-none">Bu Ürün Satışta (Aktif)</label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="label-text">Ürün Adı (TR)</label><input type="text" name="Name" id="edit-prod-name" required class="input-field"></div>
+                <div><label class="label-text">Ürün Adı (EN)</label><input type="text" name="NameEn" id="edit-prod-name-en" class="input-field"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label class="label-text">Fiyat (₺)</label><input type="number" name="Price" id="edit-prod-price" step="0.01" required class="input-field"></div>
+                <div><label class="label-text">Kategori</label><select name="CategoryId" id="edit-prod-cat" class="input-field">@foreach(var c in categories) {
+                <option value="@c.Id">@c.Name</option>
+                                }
+</select></div>
+            </div>
+            <div>
+                <label class="label-text">Stok Durumu</label>
+                <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-3">
+                    <input type="number" name="Stock" id="edit-prod-stock" class="w-20 outline-none text-sm font-bold" placeholder="Adet">
+                    <div class="w-[1px] h-6 bg-gray-200 mx-1"></div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" name="TrackStock" id="edit-prod-track" value="true" class="w-4 h-4 accent-black cursor-pointer">
+                        <label for="edit-prod-track" class="text-xs text-gray-500 cursor-pointer select-none">Stoktan Düş</label>
+                    </div>
+                </div>
+            </div>
+            <div><label class="label-text">Açıklama (TR)</label><textarea name="Description" id="edit-prod-desc" rows="2" class="input-field"></textarea></div>
+            <div><label class="label-text">Açıklama (EN)</label><textarea name="DescriptionEn" id="edit-prod-desc-en" rows="2" class="input-field"></textarea></div>
+            <button type="submit" class="w-full py-3 rounded-xl font-bold text-xs text-white bg-black hover:bg-gray-800 transition">GÜNCELLE</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .input-field {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        outline: none;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+
+        .input-field:focus {
+            border-color: #000;
+            background-color: #fff;
+        }
+
+    .label-text {
+        display: block;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #9ca3af;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<script>
+    // RESİM ÖNİZLEME FONKSİYONU
+    function previewImage(input, imgId) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById(imgId).src = e.target.result;
+                document.getElementById(imgId).style.opacity = "1";
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // MODAL JS
+    const pcm = document.getElementById('prod-create-modal');
+    function openProdCreateModal(){ pcm.classList.remove('hidden'); setTimeout(()=>{ pcm.classList.remove('opacity-0','pointer-events-none'); pcm.children[1].classList.remove('scale-95'); },10); }
+    function closeProdCreateModal(){ pcm.classList.add('opacity-0','pointer-events-none'); pcm.children[1].classList.add('scale-95'); setTimeout(()=>{ pcm.classList.add('hidden'); },300); }
+
+    const pem = document.getElementById('prod-edit-modal');
+    function openProdEditModal(btn){
+        // Verileri Doldur
+        document.getElementById('edit-prod-id').value = btn.getAttribute('data-id');
+        document.getElementById('edit-prod-name').value = btn.getAttribute('data-name');
+        document.getElementById('edit-prod-name-en').value = btn.getAttribute('data-name-en');
+        document.getElementById('edit-prod-price').value = btn.getAttribute('data-price');
+        document.getElementById('edit-prod-cat').value = btn.getAttribute('data-cat-id');
+        document.getElementById('edit-prod-desc').value = btn.getAttribute('data-desc');
+        document.getElementById('edit-prod-desc-en').value = btn.getAttribute('data-desc-en');
+        document.getElementById('edit-prod-stock').value = btn.getAttribute('data-stock');
+
+        // Resim Önizleme
+        document.getElementById('edit-preview').src = btn.getAttribute('data-img');
+
+        // Checkboxlar
+        document.getElementById('edit-prod-active').checked = (btn.getAttribute('data-active') === 'True');
+        document.getElementById('edit-prod-track').checked = (btn.getAttribute('data-track') === 'True');
+
+        // Animasyon
+        pem.classList.remove('hidden'); setTimeout(()=>{ pem.classList.remove('opacity-0','pointer-events-none'); pem.children[1].classList.remove('scale-95'); },10);
+    }
+    function closeProdEditModal(){ pem.classList.add('opacity-0','pointer-events-none'); pem.children[1].classList.add('scale-95'); setTimeout(()=>{ pem.classList.add('hidden'); },300); }
+</script>

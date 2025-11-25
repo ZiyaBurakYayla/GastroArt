@@ -1,0 +1,96 @@
+﻿@model List<GastroArt.Models.Data.Order>
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="flex justify-between items-center mb-8">
+    <h1 class="text-2xl font-bold text-gray-800">Arşiv (Geçmiş & İptaller)</h1>
+    <a href="/Order/Index" class="text-blue-500 font-bold underline flex items-center gap-1">
+        <i class="ri-arrow-left-line"></i> Geri Dön
+    </a>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="bg-red-100 text-red-700 p-4 rounded-xl mb-6 text-center font-bold border border-red-200 shadow-sm">
+        <i class="ri-error-warning-line align-middle mr-1"></i> @TempData["Error"]
+    </div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="text-center py-20 text-gray-400">
+        <i class="ri-history-line text-6xl mb-4"></i>
+        <p>Arşivde kayıt bulunamadı.</p>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @foreach (var order in Model)
+        {
+            // DURUM KONTROLÜ
+            // OrderState: 1 (Completed), 2 (Canceled)
+            bool isCanceled = order.OrderState == GastroArt.Models.Entity.OrderState.Canceled;
+
+            // Tasarım Değişkenleri
+            string cardClass = isCanceled ? "border-red-200 bg-red-50/50" : "border-green-200 bg-white";
+            string headerClass = isCanceled ? "bg-red-100 border-red-200" : "bg-green-50 border-green-100";
+            string statusText = isCanceled ? "İPTAL EDİLDİ" : "TAMAMLANDI";
+            string statusIcon = isCanceled ? "ri-close-circle-line" : "ri-check-double-line";
+            string statusBadgeClass = isCanceled ? "bg-white text-red-600 border-red-200" : "bg-white text-green-600 border-green-200";
+            string priceColor = isCanceled ? "text-gray-400 line-through" : "text-green-700";
+
+            <div class="rounded-3xl border shadow-sm overflow-hidden flex flex-col @cardClass transition hover:shadow-md">
+
+                <div class="p-5 border-b flex justify-between items-center @headerClass">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center font-bold text-lg shadow-sm @(isCanceled ? "text-red-600" : "text-green-600")">
+                            @order.TableNo
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold uppercase opacity-60">MASA NO</div>
+                            <div class="text-xs font-medium">@order.OrderDate.ToString("dd.MM HH:mm")</div>
+                        </div>
+                    </div>
+                    <span class="px-3 py-1 rounded-lg text-xs font-bold border flex items-center gap-1 @statusBadgeClass">
+                        <i class="@statusIcon"></i> @statusText
+                    </span>
+                </div>
+
+                <div class="p-5 flex-1">
+                    <ul class="space-y-2 mb-4">
+                        @foreach (var item in order.OrderItems)
+                        {
+                            <li class="flex justify-between text-sm border-b border-dashed border-gray-200 pb-1 last:border-0">
+                                <span class="text-gray-700"><b>@item.Quantity x</b> @item.ProductName</span>
+                                <span class="text-gray-400 text-xs">@((item.Price * item.Quantity).ToString("N0"))₺</span>
+                            </li>
+                        }
+                    </ul>
+
+                    @if (!string.IsNullOrEmpty(order.CustomerNote))
+                    {
+                        <div class="text-xs bg-white/50 p-2 rounded border border-gray-200 italic text-gray-500">
+                            Not: @order.CustomerNote
+                        </div>
+                    }
+                </div>
+
+                <div class="p-5 pt-0 mt-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-gray-400 text-xs font-bold uppercase">Toplam Tutar</span>
+                        <span class="text-xl font-black @priceColor">@order.TotalAmount.ToString("N2")₺</span>
+                    </div>
+
+                    <form action="/Order/Undo" method="post">
+                        <input type="hidden" name="id" value="@order.Id" />
+                        <button type="submit" onclick="return confirm('Bu siparişi tekrar BEKLİYOR durumuna almak istiyor musunuz?')" class="w-full py-3 bg-white border border-gray-300 rounded-xl font-bold text-xs text-gray-600 hover:bg-black hover:text-white hover:border-black transition flex items-center justify-center gap-2 shadow-sm">
+                            <i class="ri-restart-line text-lg"></i> DURUMU GERİ AL
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}

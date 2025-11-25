@@ -1,0 +1,676 @@
+﻿@model string
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>GastroArt 3D Menu</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#f8f9fa">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GastroArt">
+    <link rel="apple-touch-icon" href="/images/logo.png">
+
+    <link rel="icon" type="image/png" href="/images/logo.png">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+            background: #f8f9fa;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- KATMANLAR --- */
+        #layer-3d {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #layer-ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .interactive {
+            pointer-events: auto !important;
+        }
+
+        /* --- LEJANT --- */
+        #legend-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 15px 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            display: flex;
+            overflow-x: auto;
+            gap: 15px;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 20;
+        }
+
+            #legend-panel.hidden-panel {
+                transform: translateY(100%);
+            }
+
+            #legend-panel::-webkit-scrollbar {
+                display: none;
+            }
+
+        .legend-item {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 14px;
+            min-width: 85px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+            .legend-item:active {
+                background: rgba(0,0,0,0.05);
+                transform: scale(0.95);
+            }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-bottom: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .legend-text {
+            font-size: 11px;
+            font-weight: 700;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- MENÜ SHEET --- */
+        #menu-sheet {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65vh;
+            background: #fff;
+            border-top-left-radius: 35px;
+            border-top-right-radius: 35px;
+            transform: translateY(110%);
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -10px 50px rgba(0,0,0,0.15);
+            z-index: 50;
+        }
+
+            #menu-sheet.active {
+                transform: translateY(0);
+            }
+
+        .product-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #f8f8f8;
+            transition: background 0.2s;
+        }
+
+        .add-btn {
+            margin-left: auto;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: #111;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 60;
+            position: relative;
+            pointer-events: auto; /* Önemli */
+        }
+
+            .add-btn:active {
+                transform: scale(0.85);
+            }
+    </style>
+</head>
+<body>
+
+    <div id="layer-3d"></div>
+
+    <div id="layer-ui">
+
+        <div class="absolute top-0 left-0 w-full p-6 flex justify-center pointer-events-none">
+            <div class="bg-white/90 backdrop-blur-md px-8 py-3 rounded-full shadow-lg border border-white/50">
+                <span class="font-black tracking-[0.2em] text-gray-800 text-lg">GASTROART</span>
+            </div>
+        </div>
+
+        <div class="fixed top-6 right-6 z-[60] flex gap-2 pointer-events-auto">
+            <button onclick="changeLanguage('tr')" class="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition border-2 border-transparent focus:border-black overflow-hidden">
+                <img src="https://flagcdn.com/w40/tr.png" class="w-full h-full object-cover">
+            </button>
+            <button onclick="changeLanguage('en')" class="w-10 h-10 rounded-full bg-white shadow-md flex items-center justify-center hover:scale-110 transition border-2 border-transparent focus:border-black overflow-hidden">
+                <img src="https://flagcdn.com/w40/gb.png" class="w-full h-full object-cover">
+            </button>
+        </div>
+
+        <div id="legend-panel" class="interactive"></div>
+
+        <div id="menu-sheet" class="interactive">
+            <div class="p-6 text-center relative border-b border-gray-100">
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+                <h2 id="menu-title" class="text-2xl font-black text-gray-900 tracking-tight">Kategori</h2>
+                <button onclick="uiManager.closeMenu()" class="absolute right-6 top-6 text-gray-300 hover:text-black text-3xl transition">
+                    <i class="ri-close-circle-fill"></i>
+                </button>
+            </div>
+            <div id="menu-list" class="flex-1 overflow-y-auto p-5 pb-32"></div>
+        </div>
+
+        <div class="interactive">
+
+            <div id="ui-call-waiter" onclick="window.callWaiterSignal()"
+                 class="fixed bottom-28 right-6 bg-white text-orange-600 w-12 h-12 rounded-full flex items-center justify-center shadow-lg cursor-pointer transition-transform hover:scale-110 z-[60] border border-orange-100"
+                 style="pointer-events: auto;">
+                <i class="ri-notification-3-fill text-xl"></i>
+            </div>
+
+            <div id="ui-cart-fab" onclick="cartManager.toggleModal()"
+                 class="fixed bottom-8 right-6 bg-black text-white w-16 h-16 rounded-full flex items-center justify-center shadow-2xl cursor-pointer transition-transform hover:scale-110 hidden z-[60]"
+                 style="pointer-events: auto;">
+                <div class="relative">
+                    <i class="ri-shopping-basket-2-fill text-2xl"></i>
+                    <span id="ui-cart-count" class="absolute -top-2 -right-2 bg-orange-600 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-white">0</span>
+                </div>
+            </div>
+
+            <div id="ui-cart-modal" class="fixed inset-0 hidden z-[70]" style="pointer-events: auto;">
+                <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" onclick="cartManager.toggleModal()"></div>
+                <div class="absolute bottom-0 left-0 w-full bg-white rounded-t-[2.5rem] p-8 shadow-[0_-20px_60px_rgba(0,0,0,0.3)] transition-transform duration-300 transform translate-y-full flex flex-col max-h-[85vh]" id="ui-cart-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-black text-gray-900" id="cart-title">Sepetim</h3>
+                        <button onclick="cartManager.toggleModal()" class="text-gray-400 hover:text-black transition"><i class="ri-close-circle-fill text-3xl"></i></button>
+                    </div>
+                    <div id="ui-cart-items" class="overflow-y-auto flex-1 space-y-4 mb-6 pr-2"></div>
+                    <div class="border-t border-gray-100 pt-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="text-gray-500 font-bold uppercase text-sm" id="cart-total-text">Toplam Tutar</span>
+                            <span id="ui-cart-total" class="text-3xl font-black text-gray-900">0.00₺</span>
+                        </div>
+                        <div class="space-y-3">
+                            <input type="text" id="ui-table-no" placeholder="Masa Numaranız (Örn: 5)" class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 font-bold text-center text-lg focus:border-black outline-none transition">
+                            <input type="text" id="ui-customer-note" placeholder="Sipariş Notu (Opsiyonel)" class="w-full p-4 bg-gray-50 rounded-2xl border border-gray-200 text-center text-sm focus:border-black outline-none transition">
+                            <button onclick="cartManager.submitOrder()" class="w-full py-5 bg-black text-white rounded-2xl font-bold text-lg shadow-xl active:scale-95 transition hover:bg-gray-900" id="cart-confirm-btn">SİPARİŞİ ONAYLA</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="ui-success" class="fixed inset-0 hidden flex items-center justify-center pointer-events-none z-[80]">
+                <div class="bg-green-600 text-white px-10 py-6 rounded-3xl shadow-2xl flex flex-col items-center gap-3 transform scale-0 transition-transform" id="ui-success-box">
+                    <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl"><i class="ri-check-line"></i></div>
+                    <div class="text-center">
+                        <div class="font-black text-2xl" id="success-title">Sipariş Alındı!</div>
+                        <div class="text-green-100 text-sm mt-1" id="success-desc">Mutfak hazırlanıyor...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/", "gsap": "https://unpkg.com/gsap@3.12.5/index.js" } }
+    </script>
+
+    <script>
+        // Veriyi Güvenli Al
+        const dbData = @Html.Raw(string.IsNullOrEmpty(Model) ? "[]" : Model);
+        let cart = [];
+        let currentLang = 'tr'; // Varsayılan Dil
+
+        // --- DİL DEĞİŞTİRME (DÜZELTİLDİ) ---
+        window.changeLanguage = function(lang) {
+            currentLang = lang;
+            const isEn = lang === 'en';
+
+            // 1. STATİK METİNLERİ GÜNCELLE
+            const menuTitle = document.getElementById('menu-title');
+            document.getElementById('cart-title').innerText = isEn ? 'My Cart' : 'Sepetim';
+            document.getElementById('cart-total-text').innerText = isEn ? 'Total Amount' : 'Toplam Tutar';
+            document.getElementById('cart-confirm-btn').innerText = isEn ? 'CONFIRM ORDER' : 'SİPARİŞİ ONAYLA';
+            document.getElementById('ui-table-no').placeholder = isEn ? 'Table No (Ex: 5)' : 'Masa No (Örn: 5)';
+            document.getElementById('ui-customer-note').placeholder = isEn ? 'Note (Optional)' : 'Not (Opsiyonel)';
+            document.getElementById('success-title').innerText = isEn ? 'Order Received!' : 'Sipariş Alındı!';
+            document.getElementById('success-desc').innerText = isEn ? 'Kitchen is preparing...' : 'Mutfak hazırlanıyor...';
+
+            // 2. LEJANT (ALT MENÜ) GÜNCELLEME - KRİTİK KISIM
+            const legendItems = document.querySelectorAll('.legend-item');
+            legendItems.forEach(item => {
+                const index = item.getAttribute('data-index');
+                if(index !== null && dbData[index]) {
+                    const cat = dbData[index];
+                    const newName = isEn ? (cat.nameEn || cat.name) : cat.name;
+
+                    const textDiv = item.querySelector('.legend-text');
+                    if(textDiv) textDiv.innerText = newName;
+                }
+            });
+
+            // 3. AÇILIR MENÜ BAŞLIĞI GÜNCELLEME
+            if (uiManager.currentCatIndex !== null) {
+                uiManager.openMenu(uiManager.currentCatIndex);
+            } else {
+                if(menuTitle) menuTitle.innerText = isEn ? 'Category' : 'Kategori';
+            }
+        };
+
+        // --- EVENT DELEGATION ---
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.add-btn');
+            if (btn) {
+                e.stopPropagation();
+                const name = btn.getAttribute('data-name');
+                const price = btn.getAttribute('data-price');
+                cartManager.add(name, price);
+
+                btn.style.transform = "scale(0.8)";
+                setTimeout(() => btn.style.transform = "scale(1)", 150);
+            }
+        });
+
+        // --- SIGNALR ---
+        const connection = new signalR.HubConnectionBuilder().withUrl("/orderHub").build();
+        connection.start().then(() => console.log("✅ SignalR Bağlandı")).catch(err => console.error("❌", err));
+
+        window.callWaiterSignal = function() {
+            const tableNo = document.getElementById('ui-table-no').value || '@ViewBag.TableNo';
+            const isEn = currentLang === 'en';
+
+            if (!tableNo) {
+                alert(isEn ? "Please enter table no in cart first!" : "Lütfen önce sepeti açıp Masa Numarası giriniz.");
+                window.cartManager.toggleModal();
+                setTimeout(() => document.getElementById('ui-table-no').focus(), 300);
+                return;
+            }
+            const btn = document.getElementById('ui-call-waiter');
+            btn.style.transform = "scale(0.8)";
+            setTimeout(() => btn.style.transform = "scale(1)", 150);
+
+            connection.invoke("CallWaiter", tableNo).then(() => {
+                alert(isEn ? "Waiter has been notified!" : "✅ Garsona haber verildi!");
+            }).catch(err => { console.error(err); alert("Connection Error!"); });
+        };
+
+        // --- UI YÖNETİCİSİ ---
+        const uiManager = {
+            sheet: document.getElementById('menu-sheet'),
+            title: document.getElementById('menu-title'),
+            list: document.getElementById('menu-list'),
+            legend: document.getElementById('legend-panel'),
+            currentCatIndex: null,
+
+            openMenu: function(catIndex) {
+                this.currentCatIndex = catIndex;
+                if (!dbData || !dbData[catIndex]) return;
+                const category = dbData[catIndex];
+                const isEn = currentLang === 'en';
+
+                // Kategori Adı Çevirisi
+                this.title.innerText = isEn ? (category.nameEn || category.name) : category.name;
+                this.list.innerHTML = '';
+
+                if (!category.products || category.products.length === 0) {
+                    this.list.innerHTML = `<div class="flex flex-col items-center justify-center h-40 text-gray-400"><i class="ri-ghost-line text-4xl mb-2"></i><span class="text-sm">${isEn ? 'No products.' : 'Ürün yok.'}</span></div>`;
+                } else {
+                    category.products.forEach(p => {
+                        const img = p.image || 'https://via.placeholder.com/150?text=No+Image';
+                        const safeName = p.name.replace(/"/g, '&quot;');
+
+                        // Ürün Adı ve Açıklama Çevirisi
+                        const prodName = isEn ? (p.nameEn || p.name) : p.name;
+                        const prodDesc = isEn ? (p.descriptionEn || p.description) : p.description;
+
+                        let buttonHtml = '';
+                        let opacityClass = '';
+                        let stockBadge = '';
+
+                        if (p.trackStock === true && p.stock <= 0) {
+                            buttonHtml = `<button class="bg-gray-100 text-gray-300 w-10 h-10 rounded-full flex items-center justify-center cursor-not-allowed"><i class="ri-forbid-2-line text-xl"></i></button>`;
+                            opacityClass = 'opacity-50 grayscale pointer-events-none';
+                            stockBadge = `<div class="absolute top-3 left-3 bg-red-500 text-white text-[10px] font-black px-2 py-1 rounded shadow-sm z-10 tracking-wider">${isEn ? 'SOLD OUT' : 'TÜKENDİ'}</div>`;
+                        } else {
+                            buttonHtml = `<button class="add-btn" data-name="${safeName}" data-price="${p.price}"><i class="ri-add-line text-xl pointer-events-none"></i></button>`;
+                        }
+
+                        const html = `
+                        <div class="product-card relative ${opacityClass}">
+                            ${stockBadge}
+                            <div class="relative w-20 h-20 flex-shrink-0">
+                                <img src="${img}" class="w-full h-full rounded-2xl object-cover shadow-sm border border-gray-100">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-bold text-gray-900 text-base truncate">${prodName}</div>
+                                <div class="text-xs text-gray-500 line-clamp-2 mt-0.5 leading-relaxed">${prodDesc || ''}</div>
+                                <div class="font-black text-black mt-2 text-lg">${p.price}₺</div>
+                            </div>
+                            ${buttonHtml}
+                        </div>`;
+
+                        this.list.innerHTML += html;
+                    });
+                }
+
+                this.sheet.classList.add('active');
+                this.legend.classList.add('hidden-panel');
+                document.dispatchEvent(new CustomEvent('shiftCamera', { detail: { up: true } }));
+            },
+
+            closeMenu: function() {
+                this.sheet.classList.remove('active');
+                this.legend.classList.remove('hidden-panel');
+                this.currentCatIndex = null;
+                document.dispatchEvent(new CustomEvent('shiftCamera', { detail: { up: false } }));
+                document.dispatchEvent(new CustomEvent('resetActiveShard'));
+
+                const isEn = currentLang === 'en';
+                const title = document.getElementById('menu-title');
+                if(title) title.innerText = isEn ? 'Category' : 'Kategori';
+            }
+        };
+
+        // --- SEPET YÖNETİCİSİ ---
+        const cartManager = {
+            items: [],
+            fab: document.getElementById('ui-cart-fab'),
+            badge: document.getElementById('ui-cart-count'),
+            modal: document.getElementById('ui-cart-modal'),
+            content: document.getElementById('ui-cart-content'),
+            list: document.getElementById('ui-cart-items'),
+            totalEl: document.getElementById('ui-cart-total'),
+
+            add: function(name, price) {
+                let numPrice = typeof price === 'string' ? parseFloat(price.replace(',','.')) : price;
+                let existing = this.items.find(x => x.name === name);
+                if(existing) existing.qty++;
+                else this.items.push({ name: name, price: numPrice, qty: 1 });
+                this.updateUI();
+                if(navigator.vibrate) navigator.vibrate(50);
+            },
+
+            updateQty: function(index, delta) {
+                this.items[index].qty += delta;
+                if(this.items[index].qty <= 0) this.items.splice(index, 1);
+                this.updateUI();
+            },
+
+            updateUI: function() {
+                let totalQty = this.items.reduce((a, b) => a + b.qty, 0);
+                let totalMoney = this.items.reduce((a, b) => a + (b.price * b.qty), 0);
+
+                this.badge.innerText = totalQty;
+                this.totalEl.innerText = totalMoney.toFixed(2) + "₺";
+
+                if(totalQty > 0) this.fab.classList.remove('hidden');
+                else this.fab.classList.add('hidden');
+
+                this.list.innerHTML = '';
+                this.items.forEach((item, idx) => {
+                    this.list.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-2xl">
+                        <div><div class="font-bold text-gray-800">${item.name}</div><div class="text-xs text-gray-500 font-medium mt-0.5">${item.price}₺ x ${item.qty}</div></div>
+                        <div class="flex items-center gap-3 bg-white rounded-xl p-1 shadow-sm">
+                            <button onclick="cartManager.updateQty(${idx}, -1)" class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-600 hover:bg-gray-100 font-bold transition">-</button>
+                            <span class="font-bold text-sm min-w-[20px] text-center">${item.qty}</span>
+                            <button onclick="cartManager.updateQty(${idx}, 1)" class="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-bold hover:bg-gray-800 transition">+</button>
+                        </div>
+                    </div>`;
+                });
+            },
+
+            toggleModal: function() {
+                if(this.modal.classList.contains('hidden')) {
+                    this.modal.classList.remove('hidden');
+                    const savedTable = '@ViewBag.TableNo';
+                    if(savedTable && document.getElementById('ui-table-no').value === "") {
+                        document.getElementById('ui-table-no').value = savedTable;
+                        document.getElementById('ui-table-no').readOnly = true;
+                    }
+                    setTimeout(() => this.content.classList.remove('translate-y-full'), 10);
+                } else {
+                    this.content.classList.add('translate-y-full');
+                    setTimeout(() => this.modal.classList.add('hidden'), 300);
+                }
+            },
+
+            submitOrder: function() {
+                const tableNo = document.getElementById('ui-table-no').value;
+                const note = document.getElementById('ui-customer-note').value;
+                const isEn = currentLang === 'en';
+
+                if(!tableNo) { alert(isEn ? "Please enter table no!" : "Lütfen masa numaranızı giriniz."); return; }
+                if(this.items.length === 0) return;
+
+                const payload = { TableNo: tableNo, CustomerNote: note, Items: this.items.map(i => ({ Name: i.name, Price: i.price, Quantity: i.qty })) };
+
+                fetch('/Menu/PlaceOrder', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) })
+                .then(res => res.json()).then(data => {
+                    if(data.success) {
+                        this.toggleModal(); this.items = []; this.updateUI();
+                        const box = document.getElementById('ui-success-box'); const wrap = document.getElementById('ui-success');
+                        wrap.classList.remove('hidden'); setTimeout(() => box.classList.remove('scale-0'), 10);
+                        setTimeout(() => { box.classList.add('scale-0'); setTimeout(() => wrap.classList.add('hidden'), 300); }, 2000);
+                    } else { alert("Hata: " + (data.message || "İşlem başarısız")); }
+                }).catch(err => console.error("Sipariş Hatası:", err));
+            }
+        };
+
+        // Sayfa Yüklenince
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTable = '@ViewBag.TableNo';
+            if(savedTable) {
+                const inputUI = document.getElementById('ui-table-no');
+                if(inputUI) { inputUI.value = savedTable; inputUI.readOnly = true; inputUI.classList.add('bg-gray-100', 'text-gray-500'); }
+            }
+        });
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import gsap from 'gsap';
+
+        const container = document.getElementById('layer-3d');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xf8f9fa);
+        scene.fog = new THREE.Fog(0xf8f9fa, 10, 40);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 0, 14);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+        dirLight.position.set(5, 12, 8);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        const group = new THREE.Group();
+        scene.add(group);
+
+        const shards = [];
+        let activeShard = null;
+        const geometry = new THREE.OctahedronGeometry(1.8, 0);
+        const legendPanel = document.getElementById('legend-panel');
+
+        // 3D KRİSTALLERİ OLUŞTUR
+        dbData.forEach((cat, i) => {
+            const colorHex = parseInt(cat.color.replace('#', '0x'), 16);
+            const mat = new THREE.MeshPhysicalMaterial({
+                color: colorHex, roughness: 0.2, metalness: 0.1,
+                transmission: 0, clearcoat: 0.5, envMapIntensity: 1
+            });
+
+            const mesh = new THREE.Mesh(geometry, mat);
+            mesh.castShadow = true; mesh.receiveShadow = true;
+
+            const angle = (i / dbData.length) * Math.PI * 2;
+            const radius = 1.4;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+
+            mesh.position.set(x, 0, z);
+            mesh.rotation.set(Math.random(), Math.random(), Math.random());
+
+            mesh.userData = { id: i, originalPos: new THREE.Vector3(x, 0, z), color: colorHex };
+            group.add(mesh);
+            shards.push(mesh);
+
+            // Lejant Oluştur (HTML)
+            const el = document.createElement('div');
+            el.className = 'legend-item';
+            el.setAttribute('data-index', i);
+            el.innerHTML = `
+                <div class="legend-dot" style="background-color: ${cat.color}"></div>
+                <div class="legend-text">${cat.name}</div>
+            `;
+            el.onclick = () => activateShard(mesh);
+            legendPanel.appendChild(el);
+        });
+
+        // ETKİLEŞİM
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let isDragging = false;
+        let prevX = 0, prevY = 0;
+        const animParams = { baseY: 0 };
+
+        window.addEventListener('mousedown', e => {
+            if(e.target.closest('.interactive')) return;
+            isDragging = true; prevX = e.clientX; prevY = e.clientY;
+        });
+        window.addEventListener('touchstart', e => {
+            if(e.target.closest('.interactive')) return;
+            isDragging = true; prevX = e.touches[0].clientX; prevY = e.touches[0].clientY;
+        }, {passive:false});
+
+        window.addEventListener('mouseup', () => isDragging = false);
+        window.addEventListener('touchend', (e) => {
+            isDragging = false;
+            if(!e.target.closest('.interactive')) handleTap(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+        });
+        window.addEventListener('mousemove', e => rotateGroup(e.clientX, e.clientY));
+        window.addEventListener('touchmove', e => rotateGroup(e.touches[0].clientX, e.touches[0].clientY), {passive:false});
+        window.addEventListener('click', e => {
+            if(!e.target.closest('.interactive')) handleTap(e.clientX, e.clientY);
+        });
+
+        function rotateGroup(x, y) {
+            if (!isDragging) return;
+            const deltaX = x - prevX;
+            const deltaY = y - prevY;
+            group.rotation.y += deltaX * 0.005;
+            group.rotation.x += deltaY * 0.005;
+            prevX = x; prevY = y;
+        }
+
+        function handleTap(x, y) {
+            mouse.x = (x / window.innerWidth) * 2 - 1;
+            mouse.y = -(y / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(shards);
+            if (intersects.length > 0) activateShard(intersects[0].object);
+            else uiManager.closeMenu();
+        }
+
+        function activateShard(shard) {
+            if(activeShard === shard) return;
+            if(activeShard) resetShard(activeShard);
+            activeShard = shard;
+            const dir = shard.position.clone().normalize();
+            const target = shard.userData.originalPos.clone().add(dir.multiplyScalar(0.8));
+            gsap.to(shard.position, { x: target.x, y: target.y, z: target.z, duration: 0.5, ease: "back.out(1.5)" });
+            gsap.to(shard.material.color, { r: 1, g: 1, b: 1, duration: 0.3 });
+            uiManager.openMenu(shard.userData.id);
+        }
+
+        function resetShard(shard) {
+            gsap.to(shard.position, { x: shard.userData.originalPos.x, y: shard.userData.originalPos.y, z: shard.userData.originalPos.z, duration: 0.4, ease: "power2.out" });
+            shard.material.color.setHex(shard.userData.color);
+        }
+
+        document.addEventListener('resetActiveShard', () => { if(activeShard) { resetShard(activeShard); activeShard = null; } });
+        document.addEventListener('shiftCamera', (e) => {
+            const targetY = e.detail.up ? 1.5 : 0;
+            gsap.to(animParams, { baseY: targetY, duration: 0.8, ease: "power3.out" });
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (!isDragging) group.rotation.y += 0.0015;
+            const time = Date.now() * 0.001;
+            group.position.y = animParams.baseY + Math.sin(time * 0.8) * 0.1;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker Hazır!', reg.scope))
+                    .catch(err => console.log('SW Hatası:', err));
+            });
+        }
+    </script>
+</body>
+</html>

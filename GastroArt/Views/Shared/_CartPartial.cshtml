@@ -1,0 +1,38 @@
+﻿<div id="ui-cart-fab" onclick="cartManager.toggleModal()"
+     class="fixed bottom-6 right-6 bg-black text-white w-16 h-16 rounded-full flex items-center justify-center shadow-2xl cursor-pointer transition-transform hover:scale-110 hidden"
+     style="z-index: 9999; pointer-events: auto;">
+    <div class="relative">
+        <i class="ri-shopping-basket-2-fill text-2xl"></i>
+        <span id="ui-cart-count" class="absolute -top-3 -right-3 bg-orange-500 text-white text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full border-2 border-black">0</span>
+    </div>
+</div>
+
+<div id="ui-cart-modal" class="fixed inset-0 hidden" style="z-index: 10000;">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="cartManager.toggleModal()"></div>
+    <div class="absolute bottom-0 left-0 w-full bg-white rounded-t-[2rem] p-6 shadow-2xl transition-transform duration-300 transform translate-y-full" id="ui-cart-content">
+
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-gray-800">Sepetim</h3>
+            <button onclick="cartManager.toggleModal()" class="text-gray-400 hover:text-black"><i class="ri-close-circle-fill text-3xl"></i></button>
+        </div>
+
+        <div id="ui-cart-items" class="max-h-[40vh] overflow-y-auto space-y-4 mb-6"></div>
+
+        <div class="border-t border-gray-100 pt-4">
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-gray-500 font-medium">Toplam</span>
+                <span id="ui-cart-total" class="text-2xl font-bold text-black">0.00₺</span>
+            </div>
+            <input type="text" id="ui-table-no" placeholder="Masa No" class="w-full p-4 bg-gray-50 rounded-xl border border-gray-200 mb-3 font-bold text-center">
+            <input type="text" id="ui-customer-note" placeholder="Notunuz" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 mb-3 text-center">
+            <button onclick="cartManager.submitOrder()" class="w-full py-4 bg-black text-white rounded-xl font-bold text-lg shadow-lg active:scale-95 transition">SİPARİŞİ ONAYLA</button>
+        </div>
+    </div>
+</div>
+
+<div id="ui-success" class="fixed inset-0 hidden flex items-center justify-center pointer-events-none" style="z-index: 10001;">
+    <div class="bg-green-500 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 transform scale-0 transition-transform" id="ui-success-box">
+        <i class="ri-checkbox-circle-line text-3xl"></i>
+        <div><div class="font-bold text-lg">Sipariş Alındı!</div></div>
+    </div>
+</div>

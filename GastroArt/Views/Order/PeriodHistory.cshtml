@@ -1,0 +1,152 @@
+﻿@model List<GastroArt.Models.Data.WorkPeriod>
+@{
+    Layout = "_AdminLayout";
+}
+
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Kasa Geçmişi</h1>
+    <p class="text-sm text-gray-500">Hangi dönemde ne kadar kazanıldı ve ne satıldı?</p>
+</div>
+
+<div class="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[700px]">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                <tr>
+                    <th class="p-5 whitespace-nowrap">Durum</th>
+                    <th class="p-5 whitespace-nowrap">Başlangıç</th>
+                    <th class="p-5 whitespace-nowrap">Bitiş</th>
+                    <th class="p-5 font-bold text-right whitespace-nowrap">Ciro</th>
+                    <th class="p-5 text-center whitespace-nowrap">İşlem</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm text-gray-700">
+                @if (Model != null && Model.Count > 0)
+                {
+                    @foreach (var p in Model)
+                    {
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                            <td class="p-5">
+                                @if (p.IsActive)
+                                {
+                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold border border-green-200 whitespace-nowrap">AÇIK</span>
+                                }
+                                else
+                                {
+                                    <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 whitespace-nowrap">KAPALI</span>
+                                }
+                            </td>
+                            <td class="p-5 font-medium whitespace-nowrap">@p.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="p-5 text-gray-500 whitespace-nowrap">@(p.EndTime?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                            <td class="p-5 text-right font-black text-lg text-gray-900 whitespace-nowrap">@p.TotalRevenue.ToString("N2")₺</td>
+
+                            <td class="p-5 text-center">
+                                <button onclick="openDetailModal(@p.Id)" class="bg-black text-white px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-800 transition shadow-md active:scale-95 whitespace-nowrap">
+                                    DETAYLAR
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="5" class="p-10 text-center text-gray-400 text-sm">
+                            Henüz kasa geçmişi kaydı yok. Bir kez günü açıp kapatırsanız buraya düşecektir.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="detail-modal" class="fixed inset-0 z-50 hidden transition-opacity duration-300 opacity-0 pointer-events-none">
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" onclick="closeDetailModal()"></div>
+
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white w-full max-w-lg rounded-[2rem] shadow-2xl p-0 scale-95 transition-transform overflow-hidden" id="detail-content">
+
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900">Satış Detayları</h3>
+                <p class="text-xs text-gray-500">Bu dönemde satılan ürünler</p>
+            </div>
+            <button onclick="closeDetailModal()" class="text-gray-400 hover:text-black"><i class="ri-close-circle-fill text-2xl"></i></button>
+        </div>
+
+        <div class="p-0 max-h-[60vh] overflow-y-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-white text-gray-400 text-[10px] uppercase sticky top-0 shadow-sm">
+                    <tr>
+                        <th class="p-4 font-bold">Ürün Adı</th>
+                        <th class="p-4 font-bold text-center">Adet</th>
+                        <th class="p-4 font-bold text-right">Toplam</th>
+                    </tr>
+                </thead>
+                <tbody id="detail-list" class="text-gray-700 divide-y divide-gray-50">
+                    <tr><td colspan="3" class="p-6 text-center text-gray-400">Yükleniyor...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="p-4 border-t border-gray-100 bg-gray-50 text-right">
+            <button onclick="closeDetailModal()" class="bg-gray-200 text-gray-700 px-6 py-2 rounded-xl font-bold text-xs hover:bg-gray-300 transition">KAPAT</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('detail-modal');
+    const content = document.getElementById('detail-content');
+    const list = document.getElementById('detail-list');
+
+    function openDetailModal(id) {
+        // 1. Modalı Aç
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-95');
+        }, 10);
+
+        // 2. Listeyi Temizle ve Yükleniyor koy
+        list.innerHTML = '<tr><td colspan="3" class="p-6 text-center text-gray-400"><i class="ri-loader-4-line animate-spin text-2xl"></i><br>Veriler getiriliyor...</td></tr>';
+
+        // 3. Veriyi Çek (AJAX)
+        fetch('/Order/GetPeriodDetails/' + id)
+            .then(res => res.json())
+            .then(data => {
+                list.innerHTML = ''; // Temizle
+
+                if (data.length === 0) {
+                    list.innerHTML = '<tr><td colspan="3" class="p-6 text-center text-gray-400">Bu dönemde hiç satış yapılmamış.</td></tr>';
+                    return;
+                }
+
+                // Listeyi Doldur
+                data.forEach(item => {
+                    const html = `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-bold text-gray-800">${item.name}</td>
+                        <td class="p-4 text-center">
+                            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-lg text-xs font-bold">${item.quantity} adet</span>
+                        </td>
+                        <td class="p-4 text-right font-bold text-green-600">${item.total.toFixed(2)}₺</td>
+                    </tr>`;
+                    list.innerHTML += html;
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                list.innerHTML = '<tr><td colspan="3" class="p-6 text-center text-red-500">Veri alınırken hata oluştu.</td></tr>';
+            });
+    }
+
+    function closeDetailModal() {
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        content.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+</script>

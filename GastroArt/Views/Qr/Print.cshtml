@@ -1,0 +1,82 @@
+﻿@model List<GastroArt.Controllers.QrCodeModel>
+@{
+    Layout = null; 
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Kodları Yazdır</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #fff;
+        }
+
+        /* Yazdırma Ayarları */
+        media print {
+            .no-print
+
+        {
+            display: none !important;
+        }
+
+        .page-break {
+            page-break-inside: avoid;
+        }
+
+        body {
+            background: #fff;
+        }
+
+        }
+
+        .qr-card {
+            width: 200px;
+            height: 280px;
+            border: 2px solid #000;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            margin: 10px;
+            position: relative;
+        }
+    </style>
+</head>
+<body class="p-10">
+
+    <div class="no-print fixed top-0 left-0 w-full bg-black text-white p-4 flex justify-between items-center shadow-lg z-50">
+        <a href="/Qr/Index" class="text-sm font-bold text-gray-300 hover:text-white flex items-center gap-2">
+            &larr; Geri Dön
+        </a>
+        <div class="font-bold">@Model.Count Adet QR Kod Oluşturuldu</div>
+        <button onclick="window.print()" class="bg-white text-black px-6 py-2 rounded-lg font-bold hover:bg-gray-200 transition">
+            YAZDIR
+        </button>
+    </div>
+
+    <div class="flex flex-wrap justify-center gap-8 mt-16">
+        @foreach (var item in Model)
+        {
+            <div class="qr-card page-break">
+                <div class="text-xs font-bold tracking-[0.3em] mb-4 text-center">GASTROART</div>
+
+                <img src="@item.QrImage" class="w-32 h-32 object-contain mb-4" />
+
+                <div class="text-center">
+                    <div class="text-[10px] font-bold text-gray-400 uppercase">MASA NO</div>
+                    <div class="text-4xl font-black mt-1">@item.TableNo</div>
+                </div>
+
+                <div class="absolute bottom-3 text-[8px] text-gray-400">Menüyü görmek için okutun</div>
+            </div>
+        }
+    </div>
+
+</body>
+</html>

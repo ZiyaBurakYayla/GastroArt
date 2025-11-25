@@ -1,0 +1,102 @@
+﻿@model List<GastroArt.Models.ProductReportViewModel>
+@{
+    ViewData["Title"] = "Satış Raporları";
+    Layout = "_AdminLayout";
+
+    int totalItems = Model != null ? Model.Sum(x => x.TotalQuantity) : 0;
+    decimal totalRevenue = Model != null ? Model.Sum(x => x.TotalIncome) : 0;
+}
+
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-gray-900">Ürün Satış Raporu</h1>
+    <p class="text-sm text-gray-500">Seçilen tarih aralığında hangi üründen ne kadar satıldı?</p>
+</div>
+
+<div class="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm mb-8">
+    <form action="/Report/Reports" method="get" class="flex flex-col md:flex-row gap-4 items-end">
+
+        <div class="w-full md:w-auto">
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Başlangıç Tarihi</label>
+            <input type="date" name="startDate" value="@ViewBag.StartDate" class="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-black transition">
+        </div>
+
+        <div class="w-full md:w-auto">
+            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Bitiş Tarihi</label>
+            <input type="date" name="endDate" value="@ViewBag.EndDate" class="w-full p-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-black transition">
+        </div>
+
+        <button type="submit" class="w-full md:w-auto px-8 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition shadow-lg">
+            <i class="ri-filter-3-line"></i> Raporu Getir
+        </button>
+    </form>
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-6">
+    <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100">
+        <div class="text-xs font-bold text-blue-400 uppercase">Toplam Satılan Ürün</div>
+        <div class="text-2xl font-black text-blue-900">@totalItems Adet</div>
+    </div>
+    <div class="bg-green-50 p-4 rounded-2xl border border-green-100">
+        <div class="text-xs font-bold text-green-400 uppercase">Bu Dönem Ciro</div>
+        <div class="text-2xl font-black text-green-900">@totalRevenue.ToString("N2")₺</div>
+    </div>
+</div>
+
+<div class="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left min-w-[600px]">
+            <thead class="bg-gray-50 text-gray-500 text-xs uppercase border-b border-gray-100">
+                <tr>
+                    <th class="p-5">Sıra</th>
+                    <th class="p-5">Ürün Adı</th>
+                    <th class="p-5 text-center">Satış Adedi</th>
+                    <th class="p-5 text-center">Birim Ort.</th>
+                    <th class="p-5 text-right">Toplam Gelir</th>
+                    <th class="p-5 text-center">Oran</th>
+                </tr>
+            </thead>
+            <tbody class="text-sm text-gray-700">
+                @if (Model != null && Model.Count > 0)
+                {
+                    int rank = 1;
+                    foreach (var item in Model)
+                    {
+                       
+                        double percent = 0;
+                        if (totalRevenue > 0)
+                        {
+                            percent = (double)(item.TotalIncome / totalRevenue) * 100;
+                        }
+
+                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition group">
+                            <td class="p-5 font-bold text-gray-400">#@rank</td>
+                            <td class="p-5 font-bold text-gray-800">@item.ProductName</td>
+                            <td class="p-5 text-center">
+                                <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-lg font-bold text-xs">@item.TotalQuantity</span>
+                            </td>
+                            <td class="p-5 text-center text-gray-500 text-xs">
+                                @((item.TotalIncome / (item.TotalQuantity == 0 ? 1 : item.TotalQuantity)).ToString("N2"))₺
+                            </td>
+                            <td class="p-5 text-right font-black text-green-600">@item.TotalIncome.ToString("N2")₺</td>
+                            <td class="p-5">
+                                <div class="flex items-center gap-2">
+                                    <div class="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden w-24">
+                                        <div class="h-full bg-black rounded-full transition-all duration-1000" style="width: @((int)percent)%"></div>
+                                    </div>
+                                    <span class="text-[10px] font-bold text-gray-400">%@percent.ToString("0.0")</span>
+                                </div>
+                            </td>
+                        </tr>
+                        rank++;
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="p-10 text-center text-gray-400">Seçilen tarih aralığında satış bulunamadı.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

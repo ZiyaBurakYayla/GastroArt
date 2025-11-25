@@ -1,0 +1,292 @@
+﻿@using GastroArt.Models.Data
+@model List<Order>
+@{
+    Layout = "_AdminLayout";
+    var activePeriod = ViewBag.ActivePeriod as WorkPeriod;
+
+    decimal currentRevenue = 0;
+    if (activePeriod != null)
+    {
+        currentRevenue = 0; 
+    }
+    bool isSystemOpen = (activePeriod != null);
+}
+
+<div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 mb-8 flex justify-between items-center">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-800">Sipariş Yönetimi</h1>
+        <p class="text-sm text-gray-500">
+            Sistem Durumu:
+            @if (activePeriod != null)
+            {
+                <span class="text-green-600 font-bold">AÇIK (Başlangıç: @activePeriod.StartTime.ToString("HH:mm"))</span>
+            }
+            else
+            {
+
+                <span class="text-red-500 font-bold">KAPALI</span>
+            }
+        </p>
+    </div>
+
+    <div class="flex items-center gap-4">
+        <a href="/Order/PeriodHistory" class="flex flex-col items-end mr-4 cursor-pointer group">
+            <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-black transition">ANLIK KAZANÇ</span>
+            <div class="flex items-center gap-1">
+                <i class="ri-wallet-3-line text-green-500"></i>
+                <span class="text-2xl font-black text-gray-800 group-hover:text-green-600 transition">
+                    @(((decimal)ViewBag.CurrentRevenue).ToString("N2"))₺
+                </span>
+            </div>
+        </a>
+
+        <form action="/Order/ToggleSystem" method="post">
+            @if (activePeriod != null)
+            {
+                <button class="bg-red-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-600 transition shadow-lg shadow-red-200">
+                    <i class="ri-shut-down-line"></i> GÜNÜ KAPAT
+                </button>
+            }
+            else
+            {
+                <button class="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-200">
+                    <i class="ri-play-circle-line"></i> GÜNÜ BAŞLAT
+                </button>
+            }
+        </form>
+
+        <a href="/Order/OrderHistory" class="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl font-bold hover:bg-gray-200 transition">
+            <i class="ri-history-line"></i> Geçmiş Siparişler
+        </a>
+        <a href="/Order/Create" class="bg-black text-white border border-black px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-800 transition shadow-lg flex items-center gap-2">
+            <i class="ri-add-circle-line text-lg"></i> Sipariş Oluştur
+        </a>
+    </div>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="bg-red-100 text-red-700 p-4 rounded-xl mb-6 font-bold text-center">
+        @TempData["Error"]
+    </div>
+}
+
+@if (Model.Count == 0)
+{
+    <div class="text-center py-20 text-gray-400">
+        <i class="ri-cup-line text-6xl mb-4"></i>
+        <p>Bekleyen sipariş yok.</p>
+    </div>
+}
+else
+{
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @foreach (var order in Model)
+        {
+            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="p-5 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <a href="/Order/Print/@order.Id" target="_blank" class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-black hover:text-white transition shadow-sm" title="Fiş Yazdır">
+                            <i class="ri-printer-line"></i>
+                        </a>
+
+                        <div class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-lg">
+                            @order.TableNo
+                        </div>
+                        <div>
+                            <div class="text-[10px] font-bold text-gray-400 uppercase">MASA NO</div>
+                            <div class="text-xs text-gray-500">@order.OrderDate.ToString("HH:mm")</div>
+                        </div>
+                    </div>
+                    <span class="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-xs font-bold animate-pulse">
+                        Bekliyor
+                    </span>
+                </div>
+
+                <div class="p-5 flex-1 space-y-2">
+                    @foreach (var item in order.OrderItems)
+                    {
+                        <div class="flex justify-between text-sm border-b border-dashed border-gray-100 pb-2">
+                            <span><b>@item.Quantity x</b> @item.ProductName</span>
+                            <span class="text-gray-400">@((item.Price * item.Quantity).ToString("N0"))₺</span>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(order.CustomerNote))
+                    {
+                        <div class="bg-yellow-50 p-2 rounded text-xs text-yellow-700 mt-2"><b>Not:</b> @order.CustomerNote</div>
+                    }
+                </div>
+                <div class="p-5 pt-0 mt-auto flex gap-2">
+
+                    <form action="/Order/Cancel" method="post" class="flex-1">
+                        <input type="hidden" name="id" value="@order.Id" />
+                        <button onclick="return confirm('Siparişi İPTAL etmek istediğine emin misin?')"
+                                class="w-full py-3 bg-red-50 text-red-500 rounded-xl font-bold text-sm hover:bg-red-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                @(isSystemOpen ? "" : "disabled")>
+                            İPTAL
+                        </button>
+                    </form>
+
+                    <form action="/Order/Complete" method="post" class="flex-[2]">
+                        <input type="hidden" name="id" value="@order.Id" />
+                        <button class="w-full py-3 bg-black text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                @(isSystemOpen ? "" : "disabled")>
+                            TAMAMLA
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+<audio id="notification-sound" src="https://cdn.freesound.org/previews/536/536420_4921277-lq.mp3" preload="auto"></audio>
+
+<script>
+    // --- SIGNALR BAĞLANTISI ---
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl("/orderHub")
+        .build();
+
+    // Bağlantıyı Başlat
+    connection.start()
+        .then(() => console.log("✅ SignalR Bağlandı!"))
+        .catch(err => console.error("❌ SignalR Hatası:", err));
+
+    // --- SİNYAL GELDİĞİNDE ÇALIŞACAK FONKSİYON ---
+    connection.on("ReceiveOrder", function (order) {
+
+        // 1. Sesi Çal
+        playNotificationSound();
+
+        // 2. Yeni Kartın HTML'ini Oluştur
+        const newCardHtml = createOrderCardHtml(order);
+
+        // 3. Listeye Ekle (En başa eklemek için prepend veya insertAdjacentHTML)
+        // Grid container'ı buluyoruz. (Senin kodunda class'ı grid olan div)
+        const gridContainer = document.querySelector('.grid');
+
+        if(gridContainer) {
+            // Eğer "Sipariş Yok" mesajı varsa onu kaldır
+            const emptyMsg = document.querySelector('.text-center.py-20');
+            if(emptyMsg) emptyMsg.remove();
+
+            gridContainer.insertAdjacentHTML('afterbegin', newCardHtml);
+
+            // Yeni gelen karta dikkat çekmek için animasyon (Sarı yanıp sönme)
+            const insertedCard = gridContainer.firstElementChild;
+            insertedCard.classList.add('bg-yellow-100');
+            setTimeout(() => insertedCard.classList.remove('bg-yellow-100'), 1000);
+        } else {
+            // Eğer hiç sipariş yoksa ve grid div'i bile oluşmamışsa sayfayı yenilemek en temizidir
+            location.reload();
+        }
+    });
+
+    // Yardımcı Fonksiyon: HTML Kart Üretici
+    // Yardımcı Fonksiyon: HTML Kart Üretici
+    function createOrderCardHtml(order) {
+        // Ürünleri listele
+        let itemsHtml = '';
+        order.items.forEach(item => {
+            let price = typeof item.price === 'number' ? item.price : parseFloat(item.price);
+            let total = price * item.quantity;
+
+            itemsHtml += `
+            <li class="flex justify-between text-sm border-b border-dashed border-gray-100 pb-2 last:border-0">
+                <span class="font-medium text-gray-800">
+                    <span class="font-bold text-black">${item.quantity} x</span> ${item.name}
+                </span>
+                <span class="text-gray-400">${total.toLocaleString('tr-TR', {minimumFractionDigits: 2})}₺</span>
+            </li>`;
+        });
+
+        // Not varsa ekle
+        let noteHtml = '';
+        if(order.note) {
+            noteHtml = `
+            <div class="mt-4 bg-yellow-50 border border-yellow-100 p-3 rounded-xl text-xs text-yellow-700">
+                <span class="font-bold">Not:</span> ${order.note}
+            </div>`;
+        }
+
+        let totalAmount = typeof order.total === 'number' ? order.total : parseFloat(order.total);
+
+        // --- KART HTML ---
+        return `
+        <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden flex flex-col animate-pulse-once">
+
+            <div class="p-5 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center font-bold text-lg">
+                        ${order.tableNo}
+                    </div>
+                    <div>
+                        <div class="text-[10px] font-bold text-gray-400 uppercase">MASA NO</div>
+                        <div class="text-xs text-gray-500">${order.date}</div>
+                    </div>
+                </div>
+                <span class="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-xs font-bold animate-pulse">YENİ</span>
+            </div>
+
+            <div class="p-5 flex-1">
+                <ul class="space-y-3 mb-4">
+                    ${itemsHtml}
+                </ul>
+                ${noteHtml}
+            </div>
+
+            <div class="p-5 pt-0 mt-auto">
+                <div class="flex justify-between items-center mb-4 pt-4 border-t border-dashed border-gray-200">
+                    <span class="text-gray-500 font-bold text-xs uppercase">Toplam</span>
+                    <span class="text-xl font-black text-gray-900">${totalAmount.toLocaleString('tr-TR', {minimumFractionDigits: 2})}₺</span>
+                </div>
+
+                <div class="flex gap-2">
+
+                    <form action="/Order/Cancel" method="post" class="flex-1">
+                        <input type="hidden" name="id" value="${order.id}" />
+                        <button onclick="return confirm('Siparişi İPTAL etmek istediğine emin misin?')" class="w-full py-3 bg-red-50 text-red-500 rounded-xl font-bold text-sm hover:bg-red-100 transition">
+                            İPTAL
+                        </button>
+                    </form>
+
+                    <form action="/Order/Complete" method="post" class="flex-[2]">
+                        <input type="hidden" name="id" value="${order.id}" />
+                        <button type="submit" class="w-full py-3 bg-black text-white rounded-xl font-bold text-sm hover:bg-gray-800 transition flex items-center justify-center gap-2">
+                            <i class="ri-check-line text-lg"></i> TAMAMLA
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>`;
+    }
+
+    function playNotificationSound() {
+        const audio = document.getElementById("notification-sound");
+        audio.play().catch(error => console.log("Tarayıcı otomatik oynatmayı engelledi, etkileşim lazım."));
+    }
+</script>
+
+<style>
+    keyframes pulse-once {
+        0%
+
+    {
+        transform: scale(0.95);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    }
+
+    .animate-pulse-once {
+        animation: pulse-once 0.5s ease-out;
+    }
+</style>

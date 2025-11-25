@@ -1,0 +1,46 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <title>GastroArt Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #f0f2f5;
+            overflow: hidden;
+        }</style>
+</head>
+<body class="h-screen flex items-center justify-center">
+    <div class="absolute w-[600px] h-[600px] rounded-full blur-[80px] opacity-50 animate-pulse" style="background:#FF9AA2; top:-100px; left:-100px;"></div>
+    <div class="absolute w-[600px] h-[600px] rounded-full blur-[80px] opacity-50 animate-pulse" style="background:#E2F0CB; bottom:-100px; right:-100px;"></div>
+
+    <div class="bg-white/80 backdrop-blur-xl border border-white/50 w-full max-w-md p-10 rounded-3xl shadow-xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 tracking-widest">GASTROART</h1>
+            <p class="text-gray-400 text-xs font-bold uppercase mt-2">Yönetici Girişi</p>
+        </div>
+
+        @if (ViewBag.Error != null)
+        {
+            <div class="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-bold text-center mb-4">@ViewBag.Error</div>
+        }
+
+        <form method="post" action="/Admin/Login" class="space-y-5">
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase">Kullanıcı Adı</label>
+                <input type="text" name="Username" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white outline-none transition" placeholder="admin">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 uppercase">Şifre</label>
+                <input type="password" name="Password" class="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 focus:bg-white outline-none transition" placeholder="•••••••">
+            </div>
+            <button class="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition shadow-lg">GİRİŞ YAP</button>
+        </form>
+    </div>
+</body>
+</html>
