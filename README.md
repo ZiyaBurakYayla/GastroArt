@@ -94,6 +94,6 @@ mobil görünüm
 --- 
 
 <div align="center">
-  <strong>GastroArt</strong> © 2025 - Ziya Burak Yayla<br>
+  <strong>GastroArtSystem</strong> © 2025 - Ziya Burak Yayla<br>
   <i>Kod, Veri ve Mutfak Sanatının Buluştuğu Nokta</i>
 </div>
